@@ -1,3 +1,10 @@
+# ==========================================================================================================================================
+# Script Name: Helper Functions and Packages
+# Author: Dr. Ifeoma Ozodiegwu
+# Edited by: Grace Legris, Research Data Analyst (gracebea@gmail.com)
+# Edited: [2025-06-20]
+# Purpose: Load required functions and write functions for use in analyses and modeling.
+# ==========================================================================================================================================
 
 # clear current workspace
 rm(list = ls())
@@ -12,20 +19,26 @@ library(semPlot)
 library(officer)
 library(survey)
 library(broom)
-library(ggplot2)
 library(gridExtra)
 library(effects)
 library(writexl)
 library(ggrepel)
+library(patchwork)
+library(scales)
+library(sf)
+library(raster)
+library(dplyr)
+library(exactextractr)
+library(tidyr)
+library(pacman)
 
-options(survey.lonely.psu="adjust")
+options(survey.lonely.psu = "adjust")
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Required functions and settings
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
 # load required packages
-library(pacman)
 p_load(
   readr, tidyr, plyr, dplyr, purrr, forcats, survey, haven, ggplot2, 
   stringr, sp, raster, sf, labelled, plotrix, arules, fuzzyjoin, cowplot, 
@@ -33,43 +46,6 @@ p_load(
   srvyr, ggpubr, collapse, gtsummary, rstatix, ggcorrplot, viridis, effects, 
   rdhs, microbenchmark, ggfittext, broom, writexl
 )
-
-# bar plot function
-bar_fun <- function(df, x, fill, title, xlab) {
-  ggplot(df, aes(x = .data[[x]], fill = .data[[x]])) +
-    geom_bar() +
-    theme_manuscript() +
-    geom_bar_text(
-      stat = 'count',
-      aes(label = ..count..),
-      vjust = 0.5,
-      size = 5 * ggplot2::.pt,
-      min.size = 4 * ggplot2::.pt,
-      padding.x = grid::unit(0, "pt"),
-      padding.y = grid::unit(0, "pt"),
-      outside = TRUE
-    ) +
-    theme(legend.position = "none") +
-    labs(title = title, x = xlab)
-}
-
-# column plot function
-col_fun <- function(df, x, y, z, ylabel, color, label) {
-  ggplot(df, aes(x = .data[[x]], y = .data[[y]], fill = .data[[z]])) +
-    geom_col() +
-    coord_flip() +
-    scale_x_discrete(limits = rev) +
-    theme_manuscript() +
-    theme(legend.title = element_blank()) +
-    labs(x = "", y = ylabel) +
-    scale_fill_manual(values = color, labels = label, guide = guide_legend(reverse = TRUE))
-}
-
-# file reading function
-read.files <- function(filepat1, path, fun, encoding = "latin1") {
-  filenames <- list.files(path = path, pattern = filepat1, recursive = TRUE, full.names = FALSE)
-  sapply(filenames, fun, simplify = FALSE)
-}
 
 # extract legend from a ggplot object
 get_only_legend <- function(plot) {
@@ -92,85 +68,14 @@ theme_manuscript <- function() {
     )
 }
 
-# theme for correlation plots
-theme_corr <- function() {
-  theme(
-    panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
-    axis.text = element_text(size = 12, color = "black")
-  )
-}
-
-# stacked bar plot function
-barplot_stack.fun <- function(main_title) {
-  ggplot(counts, aes(fill = Var2, y = Freq, x = Var1)) + 
-    geom_bar(position = "stack", stat = "identity", alpha = 0.8) +
-    scale_fill_viridis(discrete = TRUE) +
-    ggtitle(main_title) +
-    theme_manuscript() +
-    xlab("") +
-    ylab("frequency") +
-    scale_fill_manual(name = "Legend", values = c("darkgrey", "brown"))
-}
-
-# proportion bar plot function
-barplot_prop.fun <- function(main_title) {
-  ggplot(counts, aes(fill = Var2, y = Freq, x = Var1)) + 
-    geom_bar(position = "fill", stat = "identity", alpha = 0.8) +
-    scale_fill_viridis(discrete = TRUE) +
-    ggtitle(main_title) +
-    theme_manuscript() +
-    scale_fill_manual(name = "Legend", values = c("darkgrey", "brown")) +
-    xlab("") +
-    ylab("percent")
-}
-
-# alternative version of proportion bar plot function
-barplot_prop.fun2 <- function(dataframe) {
-  ggplot(dataframe, aes(fill = Var2, y = Freq, x = Var1, label = scales::percent(percent, vjust = 3))) + 
-    geom_bar(position = "fill", stat = "identity", alpha = 0.8) +
-    scale_fill_viridis(discrete = TRUE) +
-    theme_manuscript() +
-    scale_fill_manual(name = "Legend", values = c("cyan", "darkcyan")) +
-    xlab("") +
-    ylab("proportion")
-}
-
 # survey design creation function
 svydesign_fun <- function(filename) {
   svydesign(id = ~id, strata = ~strat, nest = TRUE, weights = ~wt, data = filename)
 }
 
-# generate survey estimates
-result.prop <- function(var, var1, design) {
-  svyby(
-    formula = make.formula(var),
-    by = make.formula(var1),
-    FUN = svytotal,
-    design = design,
-    svyciprop,
-    method = 'logit',
-    levels = 0.95,
-    vartype = "se",
-    na.rm = TRUE,
-    influence = TRUE
-  )
-}
-
-# wrapper for survey estimation
-estim_prop <- function(df, col, by) {
-  svy_mal <- svydesign_fun(df)
-  result.prop(col, by, design = svy_mal)
-}
-
 # get dhs country ids
 ids <- dhs_countries(returnFields = c("CountryName", "DHS_CountryCode", "SubregionName", "RegionName")) %>%
   filter(RegionName == "Sub-Saharan Africa")
-
-# ggsave helper
-ggsave_fun <- function(save_as_pdf, save_as_png, plot_name, width_size, height_sze) {
-  ggsave(paste0(FigDir, "/", Sys.Date(), save_as_pdf), plot_name, width = width_size, height = height_sze)
-  ggsave(paste0(FigDir, "/", Sys.Date(), save_as_png), plot_name, width = width_size, height = height_sze)
-}
 
 # generate effect estimates dataframe
 effect_df_fun <- function(model_) {
@@ -180,48 +85,6 @@ effect_df_fun <- function(model_) {
     bind_cols(effect_list_est$upper %>% as.data.frame()) %>%
     rename(effect = ....1, lower = ....2, upper = ....3) %>%
     tibble::rownames_to_column()
-}
-
-# grouped column plot
-p_fun <- function(dataframe, fill_stack, y_lab) {
-  ggplot(dataframe, aes(x = reorder(country, value), y = value)) +
-    geom_col(position = fill_stack, aes(fill = variable)) +
-    scale_fill_manual(name = "", values = c("aquamarine3", "deepskyblue4"), labels = c("+ve", "-ve")) +
-    coord_flip() +
-    scale_y_continuous(expand = c(0, 0)) +
-    labs(x = "country", y = y_lab) +
-    theme_classic2() +
-    theme(axis.text.y = element_blank(), axis.line.y = element_blank(), axis.ticks.y = element_blank()) +
-    theme_manuscript()
-}
-
-# stacked plots by region
-ur_rur_pfun <- function(df_r_u) {
-  p2_r1 <- p5_stacked_fun(df_r_u[[1]], 22500) + ggtitle("eastern") +
-    theme(plot.title = element_text(margin = margin(t = 10, b = -20))) +
-    p5_prop_fun(df_r_u[[1]])
-  
-  p2_r2 <- p5_stacked_fun(df_r_u[[2]], 22500) + ggtitle("middle") +
-    theme(plot.title = element_text(margin = margin(t = 10, b = -20))) +
-    p5_prop_fun(df_r_u[[2]])
-  
-  p2_r3 <- p5_stacked_fun(df_r_u[[3]], 22500) + ggtitle("western") +
-    theme(plot.title = element_text(margin = margin(t = 10, b = -20))) +
-    p5_prop_fun(df_r_u[[3]])
-  
-  p2_r1 / p2_r2 / p2_r3 + plot_annotation(tag_levels = "A")
-}
-
-# housing and wealth bar proportion
-bar_prop_fun <- function(df, var_string, x_lab) {
-  ggplot(p_data_bar, aes_string(y = "Freq", x = "home_type_new", fill = var_string)) + 
-    geom_bar(position = "fill", stat = "identity", alpha = 0.8) +
-    facet_wrap(~hv025) +
-    theme_manuscript() +
-    scale_fill_manual(name = "", values = c("darkcyan", "brown")) +
-    xlab(x_lab) +
-    ylab("proportion") +
-    theme(legend.position = "none", strip.background = element_blank(), strip.text.x = element_blank())
 }
 
 # reproject gps
@@ -291,17 +154,6 @@ pick_files_RH <- function(year, month_lag) {
 
 pick_files_temp <- function(year, month_lag) {
   list_temp[[as.character(year)]][[month_lag]]
-}
-
-# box plot
-box_plot_fun <- function(df, var1, var2) {
-  ggplot(df, aes_string(y = var1, x = var2, fill = var2)) + 
-    geom_boxplot() +
-    labs(x = "", y = "y_lab", title = "") +
-    scale_fill_manual(values = c("darkgoldenrod1", "darkviolet"), name = "home type") +
-    theme_manuscript() +
-    theme(legend.position = "none") +
-    facet_wrap(~hv025)
 }
 
 # map theme
