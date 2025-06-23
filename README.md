@@ -24,14 +24,14 @@ This project uses DHS data and combines descriptive, spatial, and mediation anal
 
 - `data/` — DHS-derived data and analysis files  
   - `GPS/` — GPS data files for spatial linkage  
-  - `250605_rural_df_for_analysis.csv`  
+  - `250605_rural_df_for_analysis.csv` — Cleaned datasets for analysis
   - `250605_urban_df_for_analysis.csv`  
   - `251106_df_with_ci_for_analysis_trend_malaria_grace_created.csv`  
   - `251106_df_with_ci_for_analysis_trend_net_grace_created.csv`  
   - `251106_rural_df_for_analysis_trend.csv`  
   - `251106_urban_df_for_analysis_trend.csv`  
   - `251206_urban_rural_analysis_data_for_modeling.csv`  
-  - `afr_g2014_2013_0.dbf` — Shapefile component  
+  - `afr_g2014_2013_0.dbf` — Shapefile components
   - `afr_g2014_2013_0.prj`  
   - `afr_g2014_2013_0.shp`  
   - `afr_g2014_2013_0.shx`  
