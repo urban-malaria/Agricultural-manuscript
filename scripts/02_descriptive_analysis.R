@@ -3,7 +3,8 @@
 # Author: Dr. Ifeoma Ozodiegwu
 # Edited by: Grace Legris, Research Data Analyst (gracebea@gmail.com)
 # Edited: [2025-06-20]
-# Purpose: Generate Figures 1, 4, and 5
+# Purpose: Generate main figures for manuscript. Extract estimated population in each first-level administrative subdivision in each of the 15 countries analyzed using population
+# rasters. Generate maps showing the proportion of agricultural households per first-level administrative subdivision in each country.
 # ==========================================================================================================================================
 
 source(file.path("scripts/helpers.R"))
@@ -13,8 +14,8 @@ source(file.path("scripts/helpers.R"))
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
 # load urban and rural datasets
-urban_df <- read_csv(file.path("Data/250605_urban_df_for_analysis.csv"))
-rural_df <- read_csv(file.path("Data/250605_rural_df_for_analysis.csv"))
+urban_df <- read_csv(file.path("data/250605_urban_df_for_analysis.csv"))
+rural_df <- read_csv(file.path("data/250605_rural_df_for_analysis.csv"))
 
 # add a 'type' column to indicate urban
 urban_df <- urban_df %>%  
@@ -30,14 +31,14 @@ rural_df <- rural_df %>%
 recent_to_remove <- urban_df$country_year.x %>% unique()
 
 # load urban trend dataset, filter out recent records, and add a 'type' column for urban
-urban_trend_df <- read_csv(file.path("Data/251106_urban_df_for_analysis_trend.csv")) %>%  
+urban_trend_df <- read_csv(file.path("data/251106_urban_df_for_analysis_trend.csv")) %>%  
   mutate(type = "Urban")  %>% 
   filter(!country_year.x %in% recent_to_remove) %>% # remove recent entries from urban dataset
   transmute(country_year.x, country_year.x, id, strat, wt, type)  %>% # select and retain only these columns
   name_clean_fun() # clean column names using custom function
 
 # load rural trend dataset, filter out recent records, and add a 'type' column for rural
-rural_trend_df <- read_csv(file.path("Data/251106_rural_df_for_analysis_trend.csv")) %>%
+rural_trend_df <- read_csv(file.path("data/251106_rural_df_for_analysis_trend.csv")) %>%
   mutate(type = "Rural") %>%
   filter(!country_year.x %in% recent_to_remove) %>% # remove recent entries from rural dataset
   transmute(country_year.x, country_year.x, id, strat, wt, type)  %>% # select and retain only these columns
@@ -175,12 +176,12 @@ print(doc, target = file_path)
 afr.shp.base<- st_read(file.path("data/afr_g2014_2013_0.shp"))
 
 # re-load urban dataset (we need the DHS_Country_Code and CountryName vars we previously removed)
-urban_df <- read_csv(file.path("Data/250605_urban_df_for_analysis.csv")) %>% 
+urban_df <- read_csv(file.path("data/250605_urban_df_for_analysis.csv")) %>% 
   mutate(type = "Urban") %>% 
   name_clean_fun() # clean column names using custom function (see helpers.R script)
 
 # extract distinct country codes and names from the urban dataframe
-DHS_country_codes <- urban_df %>%  select(DHS_CountryCode,CountryName) %>%  distinct(DHS_CountryCode, CountryName) %>%  mutate(data_available = 1)
+DHS_country_codes <- urban_df %>% select(DHS_CountryCode,CountryName) %>%  distinct(DHS_CountryCode, CountryName) %>%  mutate(data_available = 1)
 
 # fix country codes for specific countries
 DHS_country_codes$DHS_CountryCode[which(DHS_country_codes$CountryName == 'Madagascar')] <- 'MG'
@@ -622,8 +623,6 @@ country_m_n_rural <- ggplot(df_m_n_country_rural, aes(x = diff_val_rural_nets, y
   ylim(-3, 28) + 
   xlim(-20, 20)
 
-country_m_n_rural
-
 # remove individual titles and x-axis labels from the urban and rural plots
 country_m_n_urban <- country_m_n_urban + 
   labs(x = NULL, y = NULL)
@@ -644,8 +643,8 @@ final_net_v_malaria_dots <- grid.arrange(
 final_fig3 <- grid.arrange(final_fig2, final_net_v_malaria_dots, nrow = 2, heights = c(11, 6))
 
 # save as .pdf
-ggsave(paste0(file.path(UpdatedFigDir, "_malaria_test_positivity_netuse_agric_urban_rural_by_country.pdf")), final_net_v_malaria_dots, width = 8, height = 5) 
-ggsave(paste0(file.path(UpdatedFigDir, "_final_fig3.pdf")), final_fig3, width = 8, height = 11) 
+ggsave((file.path("outputs/malaria_test_positivity_netuse_agric_urban_rural_by_country.pdf")), final_net_v_malaria_dots, width = 8, height = 5) 
+ggsave((file.path("outputs/final_fig3.pdf")), final_fig3, width = 8, height = 11) 
 
 ## =========================================================================================================================================
 ### COVARIATE DISTRIBUTION FIGURES
@@ -668,16 +667,12 @@ p1 <- ggplot(all_df, aes(x = home_type3, y = hh_size, fill = home_type3)) +
   scale_fill_manual(name = '', values =c('#5560AB','#FAAF43'))+
   geom_boxplot(outlier.size = -1, color="black", alpha = 0.7) +
   #geom_point(aes(fill = home_type3), shape = 21,size=2, alpha=0.6, stroke=0, color = '#979797')+
-  labs(x = "", y = "Household size", fill = "home type") +
+  labs(x = "", y = "Household Size", fill = "home type") +
   theme_manuscript()+
   theme(legend.position = 'none')+
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))+
   ylim(0, 16)
-
-# display the plot and save as pdf
-p1
-ggsave(paste0(file.path(UpdatedFigDir, "covariate_plots", "agric_paper_covariate_plot_HH_size.pdf")), p1 , width = 4, height = 4)
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Roof Type
@@ -739,7 +734,8 @@ all_df_hq <- all_df %>%
 # create a bar plot of housing quality by home type
 p_hq <- ggplot(all_df_hq, aes(fill = hq_f, x= home_type3)) + 
   geom_bar(aes(y = percent), position="stack", stat = "identity", show.legend = F)+
-  scale_fill_manual(name = "", values = c("#C8E6C9", "#1B5E20"))+
+  scale_fill_manual(name = "", values = c("#C8E6C9", "#1B5E20")) +
+  labs(x = "", y = "Housing Quality", fill = "home type") +
   theme_manuscript() +
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))
@@ -762,10 +758,10 @@ all_df_ts <- all_df %>%
 p_ts <- ggplot(all_df_ts, aes(fill = ts_f, x= home_type3)) + 
   geom_bar(aes(y = percent), position="stack", stat = "identity", show.legend = F)+
   scale_fill_manual(name = "", values = c("#f5bbcc", "#e75480"))+
+  labs(x = "", y = "Treatment-Seeking", fill = "home type") +
   theme_manuscript() +
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))
-p_ts
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Wealth
@@ -785,7 +781,8 @@ all_df2 <- all_df %>%
 # create a bar plot of wealth distribution by home type  
 p3 <- ggplot(all_df2, aes(fill=wealth_f, x= home_type3)) + 
   geom_bar(aes(y = percent), position="stack", stat = "identity",show.legend = F)+
-  scale_fill_manual(name = "Wealth Quintiles", values= colorRampPalette(c("#bbdefb", "#0d47a1"))(5))+
+  scale_fill_manual(name = "Wealth Quintiles", values= colorRampPalette(c("#bbdefb", "#0d47a1"))(5)) +
+  labs(x = "", y = "Wealth Quintiles", fill = "home type") +
   theme_manuscript() +
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12), legend.title = element_blank())+
@@ -797,7 +794,7 @@ p3 <- ggplot(all_df2, aes(fill=wealth_f, x= home_type3)) +
 ## =========================================================================================================================================
 
 # read in environmental data from a CSV file and create a new variable for code and year
-df_env <- read.csv(file.path(PopDir, "analysis_dat/all_geospatial_monthly_DHS.csv")) %>% 
+df_env <- read_csv(file.path("data/all_geospatial_monthly_DHS.csv")) %>% 
   mutate(code_year = paste(stringr::str_extract(.id, "^.{2}"), dhs_year, sep = "")) %>% # extract the first two characters from .id and concatenate with dhs_year
   select(-dhs_year) %>% # drop the original dhs_year column
   mutate(EVI_2000m_new = if_else(EVI_2000m < 0, 0, EVI_2000m)) # replace negative EVI values with 0
@@ -817,7 +814,7 @@ all_df <- rbind(urban_df2, rural_df2) %>%
 all_df$type_f <- factor(all_df$type, levels=c("Urban", "Rural")) # create a factor for type with specified levels
 
 # write the final analysis dataset to a CSV file
-write.csv(all_df, file.path(PopDir, "analysis_dat/251206_urban_rural_analysis_data_for_modeling.csv"))
+write.csv(all_df, file.path("data/251206_urban_rural_analysis_data_for_modeling.csv"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Enhanced Vegetation Index (EVI)
@@ -839,7 +836,6 @@ p4 <- ggplot(all_df, aes(x = home_type3, y = EVI_2000m_new, fill = home_type3)) 
   theme(legend.position = 'none')+
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))
-p4 # display the plot
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Precipitation
@@ -909,17 +905,10 @@ p8 <- ggplot(all_df, aes(x = home_type3, y = hc1, fill = home_type3)) +
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))+
   ylim(0, 59)
-p8 # display the box plot
 
 # wrap multiple plots into a single plot object and save the combined plot as a pdf
 all_p1 <- wrap_plots(p1,p4, p5, p6, p7, p8) 
-all_p1 # display the combined plot
-ggsave(paste0(FigDir,"/", Sys.Date(),"agric_paper_covariate_plots.pdf"), all_p1, width = 8.5, height = 6)
-
-# wrap another set of plots into a single plot object and save the combined plot as a pdf
 all_p2 <- wrap_plots(p_hq, p3) 
-all_p2
-ggsave(paste0(FigDir,"/", Sys.Date(),"agric_paper_covariate_plots_2.pdf"), all_p2, width = 8.5, height = 4)
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Gender
@@ -941,8 +930,6 @@ p_gender <- ggplot(all_df, aes(x = home_type3, fill = gender)) +
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))
 
-p_gender
-
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Stunting
 ## -----------------------------------------------------------------------------------------------------------------------------------------
@@ -961,43 +948,32 @@ print(stunting_percentages)
 p_stunting <- ggplot(all_df %>% drop_na(stunting_new), aes(x = home_type3, fill = stunting_new)) +
   geom_bar(position = "fill") +
   scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 1)) +
-  # geom_text(aes(label = scales::percent(..count../sum(..count..), accuracy = 0.1), group = stunting_new),
-  #           stat = "count",
-  #           position = position_fill(vjust = 0.5),
-  #           color = "white") +
   scale_fill_manual(values =c("#D1C4E9", "#4A148C"))+
   labs(x = "", y = "Stunting", fill = "home type") +
   theme_manuscript()+
   theme(legend.position = 'none')+
   facet_wrap(vars(type_f)) +
   theme(strip.text.x = element_text(size = 12))
-p_stunting # display the stunting distribution plot
-
-library(patchwork)
 
 # combine plots
 bottom_row <- p_gender + p_stunting + p_ts
 middle_row <- p_hq + p3
 
 categorical_vars <- middle_row / bottom_row
-categorical_vars
 
 # create a final figure layout with all_p1 above figure4_bottom and annotate with tag levels and save final figure as pdf
 p_figure_4 <- all_p1 / categorical_vars + plot_annotation(tag_levels = 'A')
-p_figure_4
-ggsave(paste0(file.path(UpdatedFigDir, "_covariate_plots.pdf")), p_figure_4, width = 8.5, height = 11) 
+ggsave((file.path("outputs/covariate_plots.pdf")), p_figure_4, width = 8.5, height = 11) 
 
 
 ## =========================================================================================================================================
 ### Supplemental Figure: Countries' percentage of positive/negative results by urban and rural residence and by home type
 ## =========================================================================================================================================
 
-library(scales)
-
 # load data
-urban_df <- read_csv(file.path(PopDir, "analysis_dat/250605_urban_df_for_analysis.csv")) %>%
+urban_df <- read_csv(file.path("data/250605_urban_df_for_analysis.csv")) %>%
   mutate(type = "Urban")
-rural_df <- read_csv(file.path(PopDir, "analysis_dat/250605_rural_df_for_analysis.csv")) %>%
+rural_df <- read_csv(file.path("data/250605_rural_df_for_analysis.csv")) %>%
   mutate(type = "Rural")
 
 # select relevant columns for urban and rural data
@@ -1059,7 +1035,7 @@ plot_malaria <- function(df, title) {
     geom_bar(stat = "identity", position = "fill", width = 0.7) +  
     coord_flip() +
     scale_y_continuous(labels = percent_format(), limits = c(0, 1)) +  
-    scale_fill_manual(name = "Malaria test result", labels = c("Negative", "Positive"), values = color) +
+    scale_fill_manual(name = "Malaria Test Result", labels = c("Negative", "Positive"), values = color) +
     facet_grid(. ~ home_type2) +  
     geom_text(aes(label = percent_label, y = 0.85),
               color = "black", hjust = 1) +
@@ -1076,18 +1052,16 @@ rural_plot <- plot_malaria(filter(plot_country_rural), "Malaria Test Results in 
 final_percentage_results_plot <- grid.arrange(urban_plot, rural_plot)
 
 # save the combined plot
-ggsave(paste0(file.path(UpdatedFigDir, "_descending_country_positivity.pdf")), final_percentage_results_plot, width = 10, height = 12)
+ggsave((file.path("outputs/descending_country_positivity.pdf")), final_percentage_results_plot, width = 10, height = 12)
 
 ## =========================================================================================================================================
 ### Supplemental Figure: Countries' percentage of net use by urban and rural residence and by home type
 ## =========================================================================================================================================
 
-library(scales)
-
 # load data
-urban_df <- read_csv(file.path(PopDir, "analysis_dat/250605_urban_df_for_analysis.csv")) %>%
+urban_df <- read_csv(file.path("data/250605_urban_df_for_analysis.csv")) %>%
   mutate(type = "Urban")
-rural_df <- read_csv(file.path(PopDir, "analysis_dat/250605_rural_df_for_analysis.csv")) %>%
+rural_df <- read_csv(file.path("data/250605_rural_df_for_analysis.csv")) %>%
   mutate(type = "Rural")
 
 # select relevant columns for urban and rural data
@@ -1170,5 +1144,409 @@ rural_plot <- plot_net(plot_country_rural, "Net Use Results in Rural Areas")
 final_net_results_plot <- grid.arrange(urban_plot, rural_plot)
 
 # save the combined plot
-ggsave(paste0(file.path(UpdatedFigDir, "_descending_country_net_rates.pdf")), final_net_results_plot, width = 10, height = 12)
+ggsave((file.path("outputs/descending_country_net_rates.pdf")), final_net_results_plot, width = 10, height = 12)
 
+## =========================================================================================================================================
+### Create Population/Agricultural Household Maps
+## =========================================================================================================================================
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Read in Top-Down Constrained Estimates Rasters for each Country (find most populous first-level administrative subdivisions)
+## -----------------------------------------------------------------------------------------------------------------------------------------
+countries <- c("angola", "burkina faso", "benin", "burundi", "drc", "cote d'ivoire", "cameroon",
+               "ghana", "guinea", "madagascar", "mali", "mozambique", "nigeria", "togo", "uganda")
+for (country in countries) {
+  assign(paste0(gsub(" ", "_", country), "_raster"), 
+         raster(file.path("data/population_rasters", paste0(country, ".tif"))))
+}
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Read in Subdivision Shapefiles (e.g. State, Region, etc) - First-Level Administrative Subdivision in Each Country
+## -----------------------------------------------------------------------------------------------------------------------------------------
+
+# read in the shapefiles with first-level administrative division geographic boundaries (state, region, etc)
+ao.subd <- st_read(file.path(gps_folder_path, "subdivisions", "AO", "gadm41_AGO_1.shp"))
+bf.subd <- st_read(file.path(gps_folder_path, "subdivisions", "BF", "gadm41_BFA_1.shp"))
+bj.subd <- st_read(file.path(gps_folder_path, "subdivisions", "BJ", "gadm41_BEN_1.shp"))
+bu.subd <- st_read(file.path(gps_folder_path, "subdivisions", "BU", "gadm41_BDI_1.shp"))
+cd.subd <- st_read(file.path(gps_folder_path, "subdivisions", "CD", "gadm41_COD_1.shp"))
+ci.subd <- st_read(file.path(gps_folder_path, "subdivisions", "CI", "gadm41_CIV_1.shp"))
+cm.subd <- st_read(file.path(gps_folder_path, "subdivisions", "CM", "gadm41_CMR_1.shp"))
+gh.subd <- st_read(file.path(gps_folder_path, "subdivisions", "GH", "gadm41_GHA_1.shp"))
+gn.subd <- st_read(file.path(gps_folder_path, "subdivisions", "GN", "gadm41_GIN_1.shp"))
+md.subd <- st_read(file.path(gps_folder_path, "subdivisions", "MD", "gadm41_MDG_2.shp")) # shapefile 1 has the 6 provinces that were dissolved in 2009, use # 2 which has current 23 regions
+ml.subd <- st_read(file.path(gps_folder_path, "subdivisions", "ML", "gadm41_MLI_1.shp"))
+mz.subd <- st_read(file.path(gps_folder_path, "subdivisions", "MZ", "gadm41_MOZ_1.shp"))
+ng.subd <- st_read(file.path(gps_folder_path, "subdivisions", "NG", "gadm41_NGA_1.shp"))
+tg.subd <- st_read(file.path(gps_folder_path, "subdivisions", "TG", "gadm41_TGO_1.shp"))
+ug.subd <- st_read(file.path(gps_folder_path, "subdivisions", "UG", "uga_admbnda_adm1_ubos_20200824.shp")) # GADM doesn't have the 4 region boundaries, so downloaded them from https://data.humdata.org/dataset/cod-ab-uga?
+
+subdivision_files <- list(
+  "AO" = ao.subd, "BF" = bf.subd, "BJ" = bj.subd, "BU" = bu.subd, "CD" = cd.subd,
+  "CI" = ci.subd, "CM" = cm.subd, "GH" = gh.subd, "GN" = gn.subd, "MD" = md.subd,
+  "ML" = ml.subd, "MZ" = mz.subd, "NG" = ng.subd, "TG" = tg.subd, "UG" = ug.subd
+)
+
+country_names <- c("AO" = "angola", "BF" = "burkina Faso", "BJ" = "benin", "BU" = "burundi", "CD" = "drc", "CI" = "cote d'ivoire",
+                   "CM" = "cameroon", "GH" = "ghana", "GN" = "guinea", "MD" = "madagascar", "ML" = "mali", "MZ" = "mozambique", "NG" = "nigeria", "TG" = "togo", "UG" = "uganda")
+
+# rename region names column to NAME_1 for Madagascar to match the other countries, remove province name variable (provinces were dissolved in 2009)
+subdivision_files[["MD"]] <- subdivision_files[["MD"]] %>%
+  select(-NAME_1) %>%       # remove NAME_1 column (province names)
+  rename(NAME_1 = NAME_2)   # rename NAME_2 to NAME_1 (region names)
+
+# rename region name column for Uganda to match the other countries (different data source for Uganda so different var name)
+subdivision_files[["UG"]] <- subdivision_files[["UG"]] %>%
+  rename(NAME_1 = ADM1_EN)
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Extract Population Data
+## -----------------------------------------------------------------------------------------------------------------------------------------
+
+# create an empty list to store population counts per subdivision
+pop_counts <- list()
+
+for (code in names(subdivision_files)) {
+  
+  # get country name and corresponding raster
+  country <- country_names[[code]]
+  subd <- subdivision_files[[code]]
+  raster_var <- get(paste0(gsub(" ", "_", tolower(country)), "_raster"))
+  
+  # ensure CRS matches
+  if (!st_crs(subd) == crs(raster_var)) {
+    subd <- st_transform(subd, crs(raster_var))
+  }
+  
+  # extract total population for each subdivision
+  pop_data <- exact_extract(raster_var, subd, fun = "sum", progress = FALSE)
+  
+  # combine with subdivision names
+  subd$pop_total <- pop_data
+  
+  # store in the list
+  pop_counts[[code]] <- subd
+}
+
+# convert list to a single dataframe if needed
+pop_counts_df <- bind_rows(pop_counts, .id = "Country_Code")
+
+pop_counts_final <- pop_counts_df %>%
+  select(Country_Code, COUNTRY, NAME_1, ENGTYPE_1, pop_total)
+
+pop_top_3 <- pop_counts_final %>%
+  group_by(COUNTRY) %>%
+  top_n(3, pop_total) %>%
+  ungroup()
+
+# fill in uganda name, set types
+pop_top_3 <- pop_top_3 %>%
+  mutate(COUNTRY = case_when(
+    Country_Code == "UG" ~ "Uganda",
+    TRUE ~ COUNTRY
+  )) %>%
+  mutate(ENGTYPE_1 = case_when(
+    Country_Code %in% c("UG", "MD") ~ "Region",
+    TRUE ~ ENGTYPE_1
+  )) %>%
+  mutate(ENGTYPE_1 = case_when(
+    Country_Code %in% c("MZ") ~ "Province",
+    TRUE ~ ENGTYPE_1
+  )) %>%
+  mutate(ENGTYPE_1 = case_when(
+    NAME_1 == "Abidjan" ~ "District",
+    TRUE ~ ENGTYPE_1
+  ))
+
+# make word doc table with this data to put in supplement
+pop_top_3_df <- pop_top_3 %>% 
+  st_drop_geometry() %>%
+  mutate(pop_total = round(pop_total)) %>% # round population to nearest whole number
+  select(-Country_Code) %>%
+  rename("Country" = COUNTRY,
+         "Subdivision Name" = NAME_1,
+         "Subdivision Type" = ENGTYPE_1,
+         "Population Estimate" = pop_total)
+
+doc <- read_docx()
+doc <- doc %>%
+  body_add_table(value = pop_top_3_df, style = "table_template")
+print(doc, target = file.path("outputs/pop_top_3_df.docx"))
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Data Prep: Read in Country Shapefile
+## -----------------------------------------------------------------------------------------------------------------------------------------
+
+# read the shapefile for Africa country boundaries
+afr.shp.base <- st_read(file.path("data/afr_g2014_2013_0.shp"))
+
+# filter shapefile to only include countries of interest and rename Cote d'Ivoire to match other dfs (for merging)
+# recode MG to MD (madagascar) and BI to BU (burundi) as these are the country codes we use
+afr.shp.base <- afr.shp.base %>%
+  mutate(ADM0_NAME = ifelse(ADM0_NAME == "Côte d'Ivoire", "Cote d'Ivoire", ADM0_NAME)) %>%
+  mutate(ISO2 = ifelse(ISO2 == "MG", "MD", ISO2)) %>%
+  mutate(ISO2 = ifelse(ISO2 == "BI", "BU", ISO2)) %>%
+  filter(ADM0_NAME %in% c("Angola", "Burkina Faso", "Benin", "Burundi", "Democratic Republic of the Congo", "Cote d'Ivoire", 
+                          "Cameroon", "Ghana", "Guinea", "Madagascar", "Mali", "Mozambique", "Nigeria", "Togo", "Uganda"))
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Read in Survey Data and Merge with GPS Data
+## -----------------------------------------------------------------------------------------------------------------------------------------
+
+# read in urban survey data
+urban_df <- read_csv(file.path("data/250605_urban_df_for_analysis.csv"))
+
+urban_df <- urban_df %>%
+  mutate(home_type2 = ifelse(home_type2 == "A", "Agricultural", "Non-Agricultural"))
+
+# replace space-hyphen-space with en dash and no spaces (preferred in academic writing)
+urban_df$year_combo <- gsub(" - ", "–", urban_df$year_combo)
+
+# read in all shapefiles
+shapefiles <- list()
+country_codes <- c(
+  "AOGE71FL" = "AO",  # Angola
+  "BFGE81FL" = "BF",  # Burkina Faso
+  "BJGE71FL" = "BJ",  # Benin
+  "BUGE71FL" = "BU",  # Burundi
+  "CDGE61FL" = "CD",  # Democratic Republic of Congo
+  "CIGE81FL" = "CI",  # Côte d'Ivoire
+  "CMGE71FL" = "CM",  # Cameroon
+  "GHGE8AFL" = "GH",  # Ghana
+  "GNGE71FL" = "GN",  # Guinea
+  "MDGE81FL" = "MD",  # Madagascar
+  "MLGE7AFL" = "ML",  # Mali
+  "MZGE81FL" = "MZ",  # Mozambique
+  "NGGE7BFL" = "NG",  # Nigeria
+  "TGGE62FL" = "TG",  # Togo
+  "UGGE7AFL" = "UG"   # Uganda
+)
+
+# path to the folder storing GPS data
+gps_folder_path <- file.path("data", "GPS")
+
+# loop through each country code to read in shapefiles
+for (code in names(country_codes)) {
+  shapefile_path <- file.path(gps_folder_path, code, paste0(code, ".shp"))
+  shapefiles[[country_codes[code]]] <- st_read(shapefile_path)
+}
+
+# initialize a list to store merged datasets for each country
+gps_survey_data <- list()
+
+# loop through each shapefile and merge with the survey data
+for (country_code in names(shapefiles)) {
+  # extract the shapefile for the current country
+  gps_data <- shapefiles[[country_code]]
+  
+  # filter the survey data for the corresponding country
+  country_survey_data <- urban_df[urban_df$DHS_CountryCode == toupper(country_code), ]
+  
+  # ensure that the types of DHSCLUST and hv001 are the same
+  gps_data$DHSCLUST <- as.character(gps_data$DHSCLUST)
+  country_survey_data$hv001 <- as.character(country_survey_data$hv001)
+  
+  # merge the shapefile with the filtered survey data
+  merged_data <- merge(country_survey_data, gps_data, by.x = "hv001", by.y = "DHSCLUST", all.x = TRUE)
+  
+  # store the merged dataset in the list
+  gps_survey_data[[country_code]] <- merged_data
+  
+  # select only the needed columns for simplicity
+  # rename hv001 to "cluster"
+  # create a variable for proportion of agricultural households within each cluster
+  gps_survey_data[[country_code]] <- gps_survey_data[[country_code]] %>%
+    select(hv001, dhs_year, year_combo, strat, wt, test_result, DHS_CountryCode, CountryName, home_type2, LATNUM, LONGNUM, geometry) %>%
+    rename(cluster = hv001) %>%
+    group_by(cluster) %>%
+    mutate(agric_proportion = sum(home_type2 == "Agricultural") / n()) %>%
+    ungroup()
+}
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Read in Subdivision Shapefiles (e.g. State, Region, etc) - First-Level Administrative Subdivision in Each Country
+## -----------------------------------------------------------------------------------------------------------------------------------------
+
+country_names <- c("AO" = "Angola", "BF" = "Burkina Faso", "BJ" = "Benin", "BU" = "Burundi", "CD" = "Congo Democratic Republic", "CI" = "Côte d'Ivoire",
+                   "CM" = "Cameroon", "GH" = "Ghana", "GN" = "Guinea", "MD" = "Madagascar", "ML" = "Mali", "MZ" = "Mozambique", "NG" = "Nigeria", "TG" = "Togo", "UG" = "Uganda")
+
+## =========================================================================================================================================
+### Create Maps Showing Agric HH Proportion per Subdivision (add Cluster points)
+## =========================================================================================================================================
+
+agric_palette <- c("#FAAD33", "#FF6C6B", "#E95988", "#8D58AA", "#4B59A7")
+
+# define the top 3 populous subdivisions for each country
+# all data from population raster extractions (overlaid with subdivision shapefiles)
+top_populous_subdivisions <- pop_top_3_df %>%
+  group_by(Country) %>%
+  arrange(desc(`Population Estimate`), .by_group = TRUE) %>%
+  slice_head(n = 3) %>%
+  summarise(Top_Subdivisions = list(`Subdivision Name`)) %>%
+  deframe()
+
+interval_labels <- c("[0, 0.2]", "(0.2, 0.4]", "(0.4, 0.6]", "(0.6, 0.8]", "(0.8, 1]") # labels to go in legend
+
+for (country_code in names(gps_survey_data)) { 
+  # extract the specific country from the shapefile data
+  country_shape <- afr.shp.base %>% filter(ISO2 == country_code)
+  
+  # extract the survey and gps cluster data for the current country
+  country_data <- gps_survey_data[[country_code]]
+  
+  # extract subdivision data for the current country and make it a spatial object
+  spat_country_subd <- st_as_sf(subdivision_files[[country_code]]) %>% st_make_valid()
+  
+  # extract survey data for the current country and make it a spatial object
+  spat_gps_survey_data <- st_as_sf(gps_survey_data[[country_code]], coords = c("LONGNUM", "LATNUM"), crs = st_crs(spat_country_subd)) %>% st_make_valid()
+  
+  # perform spatial join to find which geographic subdivision each cluster point is in
+  gps_survey_data_with_subdivision <- st_join(spat_gps_survey_data, spat_country_subd, join = st_within)
+  
+  # calculate agric hh proportion within each geographic subdivision
+  subd_averages <- gps_survey_data_with_subdivision %>%
+    group_by(NAME_1) %>% # NAME_1 is each subdivision name
+    summarize(subd_proportion = mean(agric_proportion, na.rm = TRUE))
+  
+  # clean up any invalid geometries in the joined data - fixed error
+  gps_survey_data_with_subdivision <- gps_survey_data_with_subdivision %>% st_make_valid()
+  
+  # join subd_averages to the gps_survey_data_with_subdivision
+  gps_survey_data_with_subdivision <- gps_survey_data_with_subdivision %>% st_join(subd_averages, join = st_within)
+  
+  # get the bounding box of the country to help scale the plots uniformly
+  bbox <- st_bbox(country_shape)
+  
+  # define a consistent zoom level for all countries
+  buffer <- 0.1
+  
+  # adjust the bounding box to create uniform scaling (box around each country)
+  xlim_range <- c(bbox["xmin"] - buffer, bbox["xmax"] + buffer)
+  ylim_range <- c(bbox["ymin"] - buffer, bbox["ymax"] + buffer)
+  
+  # prepare the subd_proportion data
+  subd_prop_data <- gps_survey_data_with_subdivision %>% 
+    st_drop_geometry() %>%
+    select(NAME_1.x, subd_proportion) %>% 
+    distinct()
+  
+  # join this to the spatial subdivision data
+  spat_country_subd_with_prop <- spat_country_subd %>%
+    left_join(subd_prop_data, by = c("NAME_1" = "NAME_1.x"))
+  
+  # remove duplicate entries in spat_country_subd_with_prop
+  spat_country_subd_with_prop <- spat_country_subd_with_prop %>%
+    group_by(NAME_1) %>%
+    filter(!(is.na(subd_proportion) & n() > 1)) %>%
+    ungroup()
+  
+  # add a new column to flag the top 3 most populous subdivisions
+  country_name <- country_names[country_code]
+  top_subs <- top_populous_subdivisions[[country_name]]
+  spat_country_subd_with_prop <- spat_country_subd_with_prop %>%
+    mutate(is_top_populous = ifelse(NAME_1 %in% top_subs, TRUE, FALSE))
+  
+  # define breaks for 20% intervals (0, 0.2, 0.4, 0.6, 0.8, 1)
+  even_cuts <- seq(0, 1, by = 0.2)
+  
+  # categorize subd_proportion by these even 20% intervals
+  spat_country_subd_with_prop$prop_cat <- cut(
+    spat_country_subd_with_prop$subd_proportion,
+    breaks = even_cuts,
+    labels = c(1, 2, 3, 4, 5),
+    include.lowest = TRUE
+  )
+  
+  # apply the same categorization for agricultural household proportions in country_data
+  country_data$prop_cat <- cut(
+    country_data$agric_proportion,
+    breaks = even_cuts,
+    labels = c(1, 2, 3, 4, 5),
+    include.lowest = TRUE
+  )
+  
+  # create the plot
+  country_agric_map <- ggplot() +
+    
+    # color subdivisions by proportion using the agric_palette
+    geom_sf(data = spat_country_subd_with_prop, aes(fill = prop_cat, geometry = geometry), color = "white") +
+    
+    # apply agric_palette to the fill scale
+    scale_fill_manual(values = agric_palette, labels = interval_labels, na.value = "gray") +
+    
+    # cluster data points without jitter
+    geom_point(data = country_data, aes(x = LONGNUM, y = LATNUM, fill = prop_cat),
+               size = 1.5, shape = 21, stroke = 0.2, show.legend = FALSE) +
+    scale_color_gradientn(colors = agric_palette) +
+    
+    # add thick black outlines for top 3 most populous subdivisions in each country
+    geom_sf(data = filter(spat_country_subd_with_prop, is_top_populous == TRUE), 
+            aes(geometry = geometry), 
+            fill = NA, 
+            color = "black", 
+            linewidth = 1,
+            inherit.aes = FALSE) +
+    
+    geom_sf(data = country_shape, aes(geometry = geometry), fill = NA, color = "black") +  # country borders
+    
+    # set consistent zoom level so all countries appear the same size
+    coord_sf(xlim = xlim_range, ylim = ylim_range, datum = NA) +
+    theme_void() +
+    
+    # customize labels and title
+    labs(title = paste(country_names[country_code], country_data$year_combo),
+         fill = "Proportion of \nAgricultural \nHouseholds") +
+    
+    # no axes or labels
+    theme(axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank())
+  
+  # assign the map plot to a variable
+  assign(paste0(country_code, "_subd_plot"), country_agric_map)
+}
+
+
+## -----------------------------------------------------------------------------------------------------------------------------------------
+### Combine Country Plots into Grid
+## -----------------------------------------------------------------------------------------------------------------------------------------
+
+# extract the combined malaria/net use legend
+prop_legend <- get_only_legend(BU_subd_plot) 
+
+# remove legends from all plots
+AO_subd_plot <- AO_subd_plot + theme(legend.position = "none")
+BF_subd_plot <- BF_subd_plot + theme(legend.position = "none")
+BJ_subd_plot <- BJ_subd_plot + theme(legend.position = "none")
+BU_subd_plot <- BU_subd_plot + theme(legend.position = "none")
+CD_subd_plot <- CD_subd_plot + theme(legend.position = "none")
+CI_subd_plot <- CI_subd_plot + theme(legend.position = "none")
+CM_subd_plot <- CM_subd_plot + theme(legend.position = "none")
+GH_subd_plot <- GH_subd_plot + theme(legend.position = "none")
+GN_subd_plot <- GN_subd_plot + theme(legend.position = "none")
+MD_subd_plot <- MD_subd_plot + theme(legend.position = "none")
+ML_subd_plot <- ML_subd_plot + theme(legend.position = "none")
+MZ_subd_plot <- MZ_subd_plot + theme(legend.position = "none")
+NG_subd_plot <- NG_subd_plot + theme(legend.position = "none")
+TG_subd_plot <- TG_subd_plot + theme(legend.position = "none")
+UG_subd_plot <- UG_subd_plot + theme(legend.position = "none")
+
+agric_subd_maps <- grid.arrange(
+  AO_subd_plot, BF_subd_plot, BJ_subd_plot, BU_subd_plot, CD_subd_plot, 
+  CI_subd_plot, CM_subd_plot, GH_subd_plot, GN_subd_plot, MD_subd_plot, 
+  ML_subd_plot, MZ_subd_plot, NG_subd_plot, TG_subd_plot, UG_subd_plot, 
+  nrow = 5, ncol = 3
+)
+
+# combine the plots and legend
+agric_final_subd_maps <- grid.arrange(
+  agric_subd_maps,
+  prop_legend,
+  ncol = 2,
+  widths = c(10, 2),
+  top = textGrob(
+    "Proportion of Agricultural Households per Subdivision (Only Urban Data)",
+    gp = gpar(fontsize = 16, fontface = "bold", hjust = 0.5)
+  )
+)
+
+# save as .pdf
+ggsave(("outputs/agric_maps.pdf"), agric_final_subd_maps, width = 10, height = 15)  
