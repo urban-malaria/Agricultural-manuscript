@@ -13,7 +13,7 @@ source(file.path("scripts/helpers.R"))
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
 # read data from (updated 6/12/25) CSV file into all_df and apply transformations
-all_df <- read_csv(file.path(PopDir, "analysis_dat/251206_urban_rural_analysis_data_for_modeling.csv")) %>%  
+all_df <- read_csv(file.path("data/251206_urban_rural_analysis_data_for_modeling.csv")) %>%  
   mutate(malaria_result = ifelse(test_result == "+ve", 1, 0),  # create binary malaria_result based on test_result
          EVI_2000m_new = case_when(is.na(EVI_2000m_new) ~ NA,  # handle missing values in EVI_2000m_new
                                    TRUE ~ EVI_2000m_new * 10),  # scale EVI_2000m_new by a factor of 10
@@ -152,17 +152,14 @@ all_results_combined_labeled$term <- table_names
 all_results_combined_labeled <- all_results_combined_labeled %>%
   filter(!str_detect(term, "Home type: Non-agricultural"))
 
-write_csv(all_results_combined_labeled, file.path(UpdatedFigDir, "tables", "adjusted_reg_results.csv"))
-
 # export both tables to a word document
-library(officer)
 doc <- read_docx()
 doc <- doc %>%
   body_add_par("Logistic Regression: Covariates and Positivity, Adjusted for Home Type", style = "heading 1") %>%
   body_add_table(value = all_results_combined_labeled, style = "table_template")
 
 # save the document
-file_path <- file.path(UpdatedFigDir, "adjusted_reg_results.docx")
+file_path <- file.path("outputs/adjusted_reg_results.docx")
 print(doc, target = file_path)
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
@@ -233,7 +230,7 @@ forest_plot_combined <- ggplot(plot_data_clean,
 forest_plot_combined
 
 # save as .pdf
-ggsave(paste0(UpdatedFigDir, "_logistic_forest_plot.pdf"), forest_plot_combined, width = 9, height = 7) 
+ggsave(file.path("outputs/logistic_forest_plot.pdf"), forest_plot_combined, width = 9, height = 7) 
 
 ## =========================================================================================================================================
 ### Single Logistic Regression Analysis (Unadjusted): Home Type and Covariates
@@ -341,14 +338,11 @@ all_results_combined_labeled <- all_results_combined_labeled %>%
     TRUE ~ term
   ))
 
-# write to an Excel file
-write_xlsx(all_results_combined_labeled, file.path(UpdatedFigDir, "single_reg_results_hometype_covariate.xlsx"))
-
 # export to a word document
 doc <- read_docx()
 doc <- doc %>%
   body_add_table(value = all_results_combined_labeled, style = "table_template")
-print(doc, target = file.path(UpdatedFigDir, "single_reg_results_hometype_covariate.docx"))
+print(doc, target = file.path("outputs/single_reg_results_hometype_covariate.docx"))
 
 # assuming your dataset is named 'all_df2', and 'typem' contains "urban" and "rural"
 all_df2 <- all_df %>%
@@ -655,7 +649,7 @@ doc <- doc %>%
   body_add_table(value = rural_results, style = "table_template")
 
 # save the document
-file_path <- file.path(UpdatedFigDir, "mediation_analysis_results_bootstrapped3.docx")
+file_path <- file.path("outputs/mediation_analysis_results_bootstrapped3.docx")
 print(doc, target = file_path)
 
 # save unrounded results in separate dfs
@@ -704,8 +698,8 @@ combined_urban_results <- bind_rows(urban_country_results_nop, .id = "Country")
 combined_rural_results <- bind_rows(rural_country_results_nop, .id = "Country")
 
 # save to avoid running mediation again
-write.csv(combined_urban_results, file = file.path(UpdatedFigDir, "urban_country_mediation_results.csv"), row.names = FALSE, quote = TRUE)
-write.csv(combined_rural_results, file = file.path(UpdatedFigDir, "rural_country_mediation_results.csv"), row.names = FALSE, quote = TRUE)
+write.csv(combined_urban_results, file = file.path("outputs/urban_country_mediation_results.csv"), row.names = FALSE, quote = TRUE)
+write.csv(combined_rural_results, file = file.path("outputs/rural_country_mediation_results.csv"), row.names = FALSE, quote = TRUE)
 
 
 ## =========================================================================================================================================
@@ -788,7 +782,7 @@ combined_effect_bar_plot <- grid.arrange(
 )
 
 # save as .pdf
-ggsave(paste0(UpdatedFigDir, "_mediation_effect_bar.pdf"), combined_effect_bar_plot, width = 9, height = 7) 
+ggsave(file.path("outputs/_mediation_effect_bar.pdf"), combined_effect_bar_plot, width = 9, height = 7) 
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Forest Plot for Percent Mediation
@@ -837,7 +831,7 @@ combined_perc_med_forest <- ggplot(combined_percent_mediation_df,
 combined_perc_med_forest
 
 # save the combined plot as a .pdf
-ggsave(paste0(UpdatedFigDir, "_combined_mediation_perc_forest2.pdf"), combined_perc_med_forest, width = 7, height = 5)
+ggsave(file.path("outputs/combined_mediation_perc_forest2.pdf"), combined_perc_med_forest, width = 7, height = 5)
 
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
@@ -917,8 +911,8 @@ country_perc_med_plots_final <- grid.arrange(
   )
 )
 
-# display the combined plot and save as .pdf
-ggsave(paste0(UpdatedFigDir, "_country_mediation_forest.pdf"), country_perc_med_plots_final, width = 12, height = 14) 
+# save as .pdf
+ggsave(file.path("outputs/country_mediation_forest.pdf"), country_perc_med_plots_final, width = 12, height = 14) 
 
 # ----- make grid with only plots that have reasonable confidence intervals ------ 
 selected_countries <- c("Burundi", "Cote d'Ivoire", "Nigeria", "Togo")
@@ -935,7 +929,7 @@ country_subset_med_plots_final <- grid.arrange(
     gp = gpar(fontsize = 16, fontface = "bold", hjust = 0.5)  # center the title
   )
 )
-ggsave(paste0(UpdatedFigDir, "_country_subset_med_plots_final.pdf"), country_subset_med_plots, width = 10, height = 10)
+ggsave(file.path("outputs/country_subset_med_plots_final.pdf"), country_subset_med_plots, width = 10, height = 10)
 
 ## =========================================================================================================================================
 ### Mediation Analysis: Predicted Probabilities and OR plots
@@ -1002,7 +996,7 @@ create_or_pp_plots <- function(df, area_type) {
     select(variables, odds, lower_ci, upper_ci, p.value)
   
   # write OR results to Excel
-  write_xlsx(df_or, file.path(UpdatedFigDir, paste0(area_type, "_df_or_results.xlsx")))
+  write_xlsx(df_or, file.path(outputs, paste0(area_type, "_df_or_results.xlsx")))
   
   # filter significant results
   df_or_significant <- df_or %>% filter(p.value < 0.05)
@@ -1116,4 +1110,4 @@ or_pp_plots <- grid.arrange(
 )
 
 # save final combined OR and PP plot as .pdf
-ggsave(paste0(UpdatedFigDir, "_odds_pred_prob.pdf"), or_pp_plots, width = 10, height = 6) 
+ggsave(file.path("outputs/odds_pred_prob.pdf"), or_pp_plots, width = 10, height = 6) 
