@@ -1201,6 +1201,8 @@ subdivision_files[["UG"]] <- subdivision_files[["UG"]] %>%
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Extract Population Data
+## If you do not have Git LFS (large file permission) installed, please skip over lines 1207-1275 and lines 1382-1387 (manual extraction
+## of most populous administrative subdivisions using large .tif population raster files) and use the hard-coded list in lines 1391-1407.
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
 # create an empty list to store population counts per subdivision
@@ -1384,6 +1386,25 @@ top_populous_subdivisions <- pop_top_3_df %>%
   slice_head(n = 3) %>%
   summarise(Top_Subdivisions = list(`Subdivision Name`)) %>%
   deframe()
+
+# if you do not have Git LFS installed to access and read the .tif raster files, continue with this code:
+top_populous_subdivisions <- list(
+  "Angola" = c("Luanda", "Huíla", "Benguela"),
+  "Burkina Faso" = c("Centre", "Haut-Bassins", "Est"),
+  "Benin" = c("Atlantique", "Borgou", "Ouémé"),
+  "Burundi" = c("Gitega", "Kirundo", "Muyinga"),
+  "Congo Democratic Republic" = c("Haut-Katanga", "Nord-Kivu", "Kinshasa"),
+  "Côte d'Ivoire" = c("Abidjan", "Montagnes", "Sassandra-Marahoué"),
+  "Cameroon" = c("Centre", "Extrême-Nord", "Littoral"),
+  "Ghana" = c("Greater Accra", "Ashanti", "Eastern"),
+  "Guinea" = c("Kankan", "Conakry", "Nzérékoré"),
+  "Madagascar" = c("Analamanga", "Vakinankaratra", "Vatovavy Fitovinany"),
+  "Mali" = c("Sikasso", "Koulikoro", "Ségou"),
+  "Mozambique" = c("Nampula", "Tete", "Zambezia"),
+  "Nigeria" = c("Kano", "Lagos", "Kaduna"),
+  "Togo" = c("Maritime", "Plateaux", "Savanes"),
+  "Uganda" = c("Central", "Eastern", "Western")
+)
 
 interval_labels <- c("[0, 0.2]", "(0.2, 0.4]", "(0.4, 0.6]", "(0.6, 0.8]", "(0.8, 1]") # labels to go in legend
 
