@@ -6,7 +6,7 @@
 # Purpose: Create Models that Explore the Relationship Between Home Type and Malaria Test Positivity and Conduct Mediation Analysis
 # ==========================================================================================================================================
 
-source(file.path("scripts/helpers.R"))
+#source(file.path("scripts/helpers.R"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Read in Analysis Datasets

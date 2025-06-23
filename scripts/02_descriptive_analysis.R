@@ -7,7 +7,7 @@
 # rasters. Generate maps showing the proportion of agricultural households per first-level administrative subdivision in each country.
 # ==========================================================================================================================================
 
-source(file.path("scripts/helpers.R"))
+#source(file.path("scripts/helpers.R"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Read in Analysis Datasets
@@ -1153,12 +1153,12 @@ ggsave((file.path("outputs/descending_country_net_rates.pdf")), final_net_result
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Read in Top-Down Constrained Estimates Rasters for each Country (find most populous first-level administrative subdivisions)
 ## -----------------------------------------------------------------------------------------------------------------------------------------
-countries <- c("angola", "burkina faso", "benin", "burundi", "drc", "cote d'ivoire", "cameroon",
-               "ghana", "guinea", "madagascar", "mali", "mozambique", "nigeria", "togo", "uganda")
-for (country in countries) {
-  assign(paste0(gsub(" ", "_", country), "_raster"), 
-         raster(file.path("data/population_rasters", paste0(country, ".tif"))))
-}
+# countries <- c("angola", "burkina faso", "benin", "burundi", "drc", "cote d'ivoire", "cameroon",
+#                "ghana", "guinea", "madagascar", "mali", "mozambique", "nigeria", "togo", "uganda")
+# for (country in countries) {
+#   assign(paste0(gsub(" ", "_", country), "_raster"), 
+#          raster(file.path("data/population_rasters", paste0(country, ".tif"))))
+# }
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Read in Subdivision Shapefiles (e.g. State, Region, etc) - First-Level Administrative Subdivision in Each Country
@@ -1206,74 +1206,74 @@ subdivision_files[["UG"]] <- subdivision_files[["UG"]] %>%
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
 # create an empty list to store population counts per subdivision
-pop_counts <- list()
-
-for (code in names(subdivision_files)) {
-  
-  # get country name and corresponding raster
-  country <- country_names[[code]]
-  subd <- subdivision_files[[code]]
-  raster_var <- get(paste0(gsub(" ", "_", tolower(country)), "_raster"))
-  
-  # ensure CRS matches
-  if (!st_crs(subd) == crs(raster_var)) {
-    subd <- st_transform(subd, crs(raster_var))
-  }
-  
-  # extract total population for each subdivision
-  pop_data <- exact_extract(raster_var, subd, fun = "sum", progress = FALSE)
-  
-  # combine with subdivision names
-  subd$pop_total <- pop_data
-  
-  # store in the list
-  pop_counts[[code]] <- subd
-}
-
-# convert list to a single dataframe if needed
-pop_counts_df <- bind_rows(pop_counts, .id = "Country_Code")
-
-pop_counts_final <- pop_counts_df %>%
-  select(Country_Code, COUNTRY, NAME_1, ENGTYPE_1, pop_total)
-
-pop_top_3 <- pop_counts_final %>%
-  group_by(COUNTRY) %>%
-  top_n(3, pop_total) %>%
-  ungroup()
-
-# fill in uganda name, set types
-pop_top_3 <- pop_top_3 %>%
-  mutate(COUNTRY = case_when(
-    Country_Code == "UG" ~ "Uganda",
-    TRUE ~ COUNTRY
-  )) %>%
-  mutate(ENGTYPE_1 = case_when(
-    Country_Code %in% c("UG", "MD") ~ "Region",
-    TRUE ~ ENGTYPE_1
-  )) %>%
-  mutate(ENGTYPE_1 = case_when(
-    Country_Code %in% c("MZ") ~ "Province",
-    TRUE ~ ENGTYPE_1
-  )) %>%
-  mutate(ENGTYPE_1 = case_when(
-    NAME_1 == "Abidjan" ~ "District",
-    TRUE ~ ENGTYPE_1
-  ))
-
-# make word doc table with this data to put in supplement
-pop_top_3_df <- pop_top_3 %>% 
-  st_drop_geometry() %>%
-  mutate(pop_total = round(pop_total)) %>% # round population to nearest whole number
-  select(-Country_Code) %>%
-  rename("Country" = COUNTRY,
-         "Subdivision Name" = NAME_1,
-         "Subdivision Type" = ENGTYPE_1,
-         "Population Estimate" = pop_total)
-
-doc <- read_docx()
-doc <- doc %>%
-  body_add_table(value = pop_top_3_df, style = "table_template")
-print(doc, target = file.path("outputs/pop_top_3_df.docx"))
+# pop_counts <- list()
+# 
+# for (code in names(subdivision_files)) {
+#   
+#   # get country name and corresponding raster
+#   country <- country_names[[code]]
+#   subd <- subdivision_files[[code]]
+#   raster_var <- get(paste0(gsub(" ", "_", tolower(country)), "_raster"))
+#   
+#   # ensure CRS matches
+#   if (!st_crs(subd) == crs(raster_var)) {
+#     subd <- st_transform(subd, crs(raster_var))
+#   }
+#   
+#   # extract total population for each subdivision
+#   pop_data <- exact_extract(raster_var, subd, fun = "sum", progress = FALSE)
+#   
+#   # combine with subdivision names
+#   subd$pop_total <- pop_data
+#   
+#   # store in the list
+#   pop_counts[[code]] <- subd
+# }
+# 
+# # convert list to a single dataframe if needed
+# pop_counts_df <- bind_rows(pop_counts, .id = "Country_Code")
+# 
+# pop_counts_final <- pop_counts_df %>%
+#   select(Country_Code, COUNTRY, NAME_1, ENGTYPE_1, pop_total)
+# 
+# pop_top_3 <- pop_counts_final %>%
+#   group_by(COUNTRY) %>%
+#   top_n(3, pop_total) %>%
+#   ungroup()
+# 
+# # fill in uganda name, set types
+# pop_top_3 <- pop_top_3 %>%
+#   mutate(COUNTRY = case_when(
+#     Country_Code == "UG" ~ "Uganda",
+#     TRUE ~ COUNTRY
+#   )) %>%
+#   mutate(ENGTYPE_1 = case_when(
+#     Country_Code %in% c("UG", "MD") ~ "Region",
+#     TRUE ~ ENGTYPE_1
+#   )) %>%
+#   mutate(ENGTYPE_1 = case_when(
+#     Country_Code %in% c("MZ") ~ "Province",
+#     TRUE ~ ENGTYPE_1
+#   )) %>%
+#   mutate(ENGTYPE_1 = case_when(
+#     NAME_1 == "Abidjan" ~ "District",
+#     TRUE ~ ENGTYPE_1
+#   ))
+# 
+# # make word doc table with this data to put in supplement
+# pop_top_3_df <- pop_top_3 %>% 
+#   st_drop_geometry() %>%
+#   mutate(pop_total = round(pop_total)) %>% # round population to nearest whole number
+#   select(-Country_Code) %>%
+#   rename("Country" = COUNTRY,
+#          "Subdivision Name" = NAME_1,
+#          "Subdivision Type" = ENGTYPE_1,
+#          "Population Estimate" = pop_total)
+# 
+# doc <- read_docx()
+# doc <- doc %>%
+#   body_add_table(value = pop_top_3_df, style = "table_template")
+# print(doc, target = file.path("outputs/pop_top_3_df.docx"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Data Prep: Read in Country Shapefile
@@ -1380,12 +1380,12 @@ agric_palette <- c("#FAAD33", "#FF6C6B", "#E95988", "#8D58AA", "#4B59A7")
 
 # define the top 3 populous subdivisions for each country
 # all data from population raster extractions (overlaid with subdivision shapefiles)
-top_populous_subdivisions <- pop_top_3_df %>%
-  group_by(Country) %>%
-  arrange(desc(`Population Estimate`), .by_group = TRUE) %>%
-  slice_head(n = 3) %>%
-  summarise(Top_Subdivisions = list(`Subdivision Name`)) %>%
-  deframe()
+# top_populous_subdivisions <- pop_top_3_df %>%
+#   group_by(Country) %>%
+#   arrange(desc(`Population Estimate`), .by_group = TRUE) %>%
+#   slice_head(n = 3) %>%
+#   summarise(Top_Subdivisions = list(`Subdivision Name`)) %>%
+#   deframe()
 
 # if you do not have Git LFS installed to access and read the .tif raster files, continue with this code:
 top_populous_subdivisions <- list(
