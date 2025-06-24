@@ -2,22 +2,22 @@
 
 ## Overview
 
-This repository contains the code and data structure for a cross-country analysis examining the relationship between adult agricultural occupation and malaria infection in children under five. Using Demographic and Health Survey (DHS) data from 15 sub-Saharan African countries, the study evaluates key mediating factors and urban–rural differences in malaria risk. The project aims to support more targeted malaria interventions and promote integrated strategies for malaria control as global funding declines.
+This repository contains the code and data structure for a cross-country analysis examining the relationship between adult agricultural occupation and malaria infection in children under five. Using Demographic and Health Survey (DHS) data from 15 African countries, the study evaluates key mediating factors and urban–rural differences in malaria risk. The project aims to support more targeted malaria interventions and promote integrated strategies for malaria control as global funding declines.
 
 ## Background
 
 Agricultural households in sub-Saharan Africa often live and work in ecological zones that support malaria transmission, including irrigated fields, croplands, and forested areas. These communities face heightened risk due to environmental exposure, poor housing quality, and reduced effectiveness of vector control strategies in outdoor or pesticide-impacted settings. This study investigates how agricultural work shapes malaria outcomes among children under five and identifies mediating factors like wealth, treatment-seeking behavior, and environmental characteristics.
 
-Amid rising malaria burden and shrinking global health funding, particularly from the U.S., it is crucial for national programs to identify and prioritize high-risk populations. This analysis provides country-specific, subnational insights to help tailor interventions and inform efficient, evidence-based targeting of malaria control resources.
+Amid high malaria burden and shrinking global health funding, particularly from the U.S., it is crucial for national programs to identify and prioritize high-risk populations. This analysis provides country-specific and subnational insights to help tailor interventions and inform efficient, evidence-based targeting of malaria control resources.
 
 ## Methodology
 
 This project uses DHS data and combines descriptive, spatial, and mediation analyses. The methods include:
 
 1. **Data compilation** (`01_data_compilation.R`): Loads and prepares child-level and household-level survey data from 15 countries.
-2. **Descriptive analysis** (`02_descriptive_analysis.R`): Summarizes malaria prevalence, ITN use, and household/environmental characteristics by agricultural status.
+2. **Descriptive analysis** (`02_descriptive_analysis.R`): Summarizes malaria prevalence, insecticide-treated net (ITN) use, and household/environmental characteristics by agricultural status.
 3. **Mediation modeling** (`03_modeling.R`): Runs logistic regression within a Structural Equation Modeling framework to assess indirect and direct effects of mediators such as vegetation index, housing quality, and wealth.
-4. **Visualization** (`04_line_plots.R`): Generates line plots to explore changes in agricultural exposure, bed net distribution, or other outcomes across time or countries.
+4. **Visualization** (`04_line_plots.R`): Generates line plots to explore changes in malaria test positivity rate, prior night ITN use, and ITN distribution counts between the preceding survey and most recent survey included in the analysis for each country.
 5. **Helper functions** (`helpers.R`): Contains utility functions used across scripts.
 
 ## Repository Structure
@@ -35,6 +35,8 @@ This project uses DHS data and combines descriptive, spatial, and mediation anal
   - `afr_g2014_2013_0.prj`  
   - `afr_g2014_2013_0.shp`  
   - `afr_g2014_2013_0.shx`  
+  - `all_geospatial_monthly_DHS.csv` — Geospatial data
+  - `220315_ITN_distribution_data.csv` — ITN distribution data
 
 - `outputs/` — Results, figures, and exported model summaries
 

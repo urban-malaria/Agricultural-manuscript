@@ -7,7 +7,7 @@
 # rasters. Generate maps showing the proportion of agricultural households per first-level administrative subdivision in each country.
 # ==========================================================================================================================================
 
-#source(file.path("scripts/helpers.R"))
+source(file.path("scripts/helpers.R"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Read in Analysis Datasets
@@ -548,19 +548,22 @@ df_m_n_country <- df_m_n_country %>%
 df_m_n_country$title = "Urban"
 
 # create the scatterplot
-country_m_n_urban <- ggplot(df_m_n_country , aes(x=diff_val_urban_nets, y=diff_val_urban_malaria, color = net_category, label=code_year)) +
+country_m_n_urban <- ggplot(df_m_n_country, aes(x = diff_val_urban_nets, y = diff_val_urban_malaria, color = net_category)) +
   geom_point(shape = 19, size = 4, alpha = 0.7) +
-  geom_text_repel(size = 4, point.padding = 5) +
+  geom_smooth(method = lm, se = FALSE, color = "red") +
+  geom_text_repel(aes(label = code_year), size = 4, point.padding = 5) +
   scale_color_manual(values = c("#622c88", "#622c88")) +
   theme_manuscript() +
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0) +
   facet_wrap(vars(title)) +
-  labs(x = "Difference in net use between agricultural worker\n HHs and non-agricultural worker HHs", 
-       y = "Difference in Malaria Test Positivity Rate Between \n Agricultural Worker HHs and Non-Agricultural Worker HHs") +
+  labs(
+    x = "Difference in net use between agricultural worker\nHHs and non-agricultural worker HHs", 
+    y = "Difference in Malaria Test Positivity Rate Between\nAgricultural Worker HHs and Non-Agricultural Worker HHs"
+  ) +
   theme(legend.position = "none") +
   ylim(-3, 28) +
-  xlim(-20, 20) 
+  xlim(-20, 20)
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 # calculate the difference in MALARIA POSITIVITY between agricultural and non-agricultural workers in RURAL areas
@@ -610,8 +613,9 @@ df_m_n_country_rural$title = "Rural"
 
 # create scatter plot comparing net use and malaria positivity rates
 country_m_n_rural <- ggplot(df_m_n_country_rural, aes(x = diff_val_rural_nets, y = diff_val_rural_malaria, color = net_category, label = code_year)) +
-  geom_point(shape = 19, size = 4, alpha = 0.7) +
-  geom_text_repel(size = 4, point.padding = 5) +  # automatically adjusts label positions to avoid overlap
+  geom_point(shape = 19, size = 4, alpha = 0.7) +  
+  geom_smooth(method = lm, se = FALSE, color = "red") +
+  geom_text_repel(size = 4, point.padding = 5) +
   scale_color_manual(values = c("#e07a5f", "#e07a5f")) +
   theme_manuscript() +
   geom_vline(xintercept = 0) +
@@ -1164,6 +1168,9 @@ ggsave((file.path("outputs/descending_country_net_rates.pdf")), final_net_result
 ### Read in Subdivision Shapefiles (e.g. State, Region, etc) - First-Level Administrative Subdivision in Each Country
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 
+# path to the folder storing GPS data
+gps_folder_path <- file.path("data", "GPS")
+
 # read in the shapefiles with first-level administrative division geographic boundaries (state, region, etc)
 ao.subd <- st_read(file.path(gps_folder_path, "subdivisions", "AO", "gadm41_AGO_1.shp"))
 bf.subd <- st_read(file.path(gps_folder_path, "subdivisions", "BF", "gadm41_BFA_1.shp"))
@@ -1323,9 +1330,6 @@ country_codes <- c(
   "TGGE62FL" = "TG",  # Togo
   "UGGE7AFL" = "UG"   # Uganda
 )
-
-# path to the folder storing GPS data
-gps_folder_path <- file.path("data", "GPS")
 
 # loop through each country code to read in shapefiles
 for (code in names(country_codes)) {
