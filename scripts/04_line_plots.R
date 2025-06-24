@@ -4,7 +4,7 @@
 # Purpose: Generate Malaria TPR and Net Use Rate Line Plots
 # ==========================================================================================================================================
 
-#source(file.path("scripts/helpers.R"))
+source(file.path("scripts/helpers.R"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
 ### Malaria Data Prep
@@ -396,71 +396,6 @@ for (country_name in countries) {
   
   # add the combined plot to the list
   country_plots[[country_name]] <- urban_comb_plot
-  
-  #------------------------------------------------------------------------------------------------------------------------------------------------#
-  
-  # create a new data frame for net distribution with a legend entry
-  net_data_country_num_legend <- net_data_country %>%
-    mutate(data_type = "Nets Distributed")  # Add a column for the legend entry
-  
-  # PLOT: TPR AND NET USE AND NUMBER OF NETS DISTRIBUTED
-  urban_comb_num_nets_plot <- ggplot(urban_combined_data, aes(x = year, y = percent, linetype = data_type, color = household_type)) +
-    geom_line(size = 1) +  # Line for malaria TPR and net use
-    geom_point(size = 3, alpha = 0.7) +  # Points for TPR and net use
-    
-    # add confidence intervals for malaria TPR (agricultural)
-    geom_errorbar(data = urban_combined_data %>% filter(data_type == "Malaria TPR", household_type == "agric_percent"),
-                  aes(ymin = agric_lower_ci, ymax = agric_upper_ci),
-                  width = 0.3, color = "#5560AB", alpha = 0.7) +
-    
-    # add confidence intervals for malaria TPR (non-agricultural)
-    geom_errorbar(data = urban_combined_data %>% filter(data_type == "Malaria TPR", household_type == "non_agric_percent"),
-                  aes(ymin = non_agric_lower_ci, ymax = non_agric_upper_ci),
-                  width = 0.3, color = "#FAAF43", alpha = 0.7) +
-    
-    # add confidence intervals for net use rate (agricultural)
-    geom_errorbar(data = urban_combined_data %>% filter(data_type == "Net Use Rate", household_type == "agric_percent"),
-                  aes(ymin = agric_lower_ci, ymax = agric_upper_ci),
-                  width = 0.3, color = "#5560AB", alpha = 0.7) +
-    
-    # add confidence intervals for net use rate (non-agricultural)
-    geom_errorbar(data = urban_combined_data %>% filter(data_type == "Net Use Rate", household_type == "non_agric_percent"),
-                  aes(ymin = non_agric_lower_ci, ymax = non_agric_upper_ci),
-                  width = 0.3, color = "#FAAF43", alpha = 0.7) +
-    
-    # add net distribution data as points and connect with a dotted line
-    geom_point(data = net_data_country_num_legend, aes(x = Year, y = scales::rescale(total_net_distributed, to = c(0, 100)), linetype = "Number of Nets Distributed"),  
-               color = "darkgreen", size = 1.5, alpha = 0.7) +  # points for number nets distributed
-    geom_line(data = net_data_country_num_legend, aes(x = Year, y = scales::rescale(total_net_distributed, to = c(0, 100)), linetype = "Number of Nets Distributed"),  
-              color = "darkgreen", size = 0.5, linetype = "dotted") +  # dotted line for nets distributed
-    
-    # set up primary and secondary y-axes
-    scale_y_continuous(
-      name = "Malaria TPR/Net Use Rate (%)",
-      limits = c(0, 100),
-      sec.axis = sec_axis(
-        transform = ~ scales::rescale(., from = c(0, 100), to = c(-100, 19000000)),
-        name = "Number of Nets Distributed"
-      )
-    ) +
-    
-    # add theme, labels, and scales
-    theme_manuscript() +
-    labs(
-      x = "Survey Year", y = "Percent (%)", title = paste(country_name), color = "Household Type", linetype = "Data Type"
-    ) +
-    theme(
-      axis.text.y = element_text(size = 12),
-      axis.text.x = element_text(size = 10),
-      plot.title = element_text(hjust = 0.5, size = 14)
-    ) +
-    scale_color_manual(values = c("agric_percent" = "#5560AB", "non_agric_percent" = "#FAAF43"),
-                       labels = c("Agricultural", "Non-Agricultural")) +
-    scale_linetype_manual(values = c("Malaria TPR" = "solid", "Net Use Rate" = "dashed", "Number of Nets Distributed" = "dotted"),  
-                          labels = c("Malaria TPR", "Net Use Rate", "Number of\n Nets Distributed"))
-  
-  # save the combined plot with the country name
-  assign(paste0(country_name, "_urban_num_nets_plot"), urban_comb_num_nets_plot)
 }
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------
@@ -553,48 +488,6 @@ urban_country_final_line_plots <- grid.arrange(
 # save as .pdf
 ggsave(file.path("outputs/urban_country_area_plots.pdf"), urban_country_final_line_plots, width = 10, height = 10) 
 
-## -----------------------------------------------------------------------------------------------------------------------------------------
-### Combine Malaria + Net Use + Number of Nets Distributed Urban Plots 
-## -----------------------------------------------------------------------------------------------------------------------------------------
-
-# extract the combined malaria/net use legend
-num_nets_legend <- get_only_legend(Benin_urban_num_nets_plot) 
-
-# remove legends from all plots
-Benin_urban_num_nets_plot <- Benin_urban_num_nets_plot + 
-  theme(legend.position = "none", axis.title.y = element_blank(), axis.title.x = element_blank())
-`Burkina Faso_urban_num_nets_plot` <- `Burkina Faso_urban_num_nets_plot` + 
-  theme(legend.position = "none", axis.title.y = element_blank(), axis.title.x = element_blank())
-Cameroon_urban_num_nets_plot <- Cameroon_urban_num_nets_plot + 
-  theme(legend.position = "none", axis.title.y = element_blank(), axis.title.x = element_blank())
-`Cote d'Ivoire_urban_num_nets_plot` <- `Cote d'Ivoire_urban_num_nets_plot` + 
-  theme(legend.position = "none", axis.title.y = element_blank(), axis.title.x = element_blank())
-Mali_urban_num_nets_plot <- Mali_urban_num_nets_plot + 
-  theme(legend.position = "none", axis.title.y = element_blank(), axis.title.x = element_blank())
-Mozambique_urban_num_nets_plot <- Mozambique_urban_num_nets_plot + 
-  theme(legend.position = "none", axis.title.y = element_blank(), axis.title.x = element_blank())
-
-urban_country_num_nets_line_plots <- grid.arrange(Benin_urban_num_nets_plot, `Burkina Faso_urban_num_nets_plot`, Cameroon_urban_num_nets_plot, `Cote d'Ivoire_urban_num_nets_plot`, Mali_urban_num_nets_plot, Mozambique_urban_num_nets_plot,
-                                                  nrow = 2, ncol = 3)
-
-# combine the plots and legend
-urban_country_final_num_nets_line_plots <- grid.arrange(
-  urban_country_num_nets_line_plots,
-  num_nets_legend,
-  ncol = 2,  # legend in the second column, plots in the first column
-  widths = c(10, 2),  # adjust the width to give more space to the plots
-  top = textGrob(
-    "Urban",
-    gp = gpar(fontsize = 16, fontface = "bold", hjust = 0.5)  # center the title
-  ),
-  bottom = textGrob(
-    "Survey Year",
-    gp = gpar(fontsize = 12, hjust = 0.5)  # center the title
-  )
-)
-
-# save as .pdf
-ggsave(file.path("outputs/urban_country_final_num_nets_line_plots.pdf"), urban_country_final_num_nets_line_plots, width = 10, height = 8) 
 
 ## =========================================================================================================================================
 ### RURAL LINE PLOTS: 1) Malaria/net use combined, 2) Malaria only, 3) Net Use only 
