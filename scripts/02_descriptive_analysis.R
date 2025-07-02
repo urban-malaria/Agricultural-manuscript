@@ -1391,7 +1391,7 @@ agric_palette <- c("#FAAD33", "#FF6C6B", "#E95988", "#8D58AA", "#4B59A7")
 #   summarise(Top_Subdivisions = list(`Subdivision Name`)) %>%
 #   deframe()
 
-# if you do not have Git LFS installed to access and read the .tif raster files, continue with this code:
+# hard code the three most populous administrative subdivisions (commented out code above determines these):
 top_populous_subdivisions <- list(
   "Angola" = c("Luanda", "Huíla", "Benguela"),
   "Burkina Faso" = c("Centre", "Haut-Bassins", "Est"),
@@ -1423,21 +1423,26 @@ for (country_code in names(gps_survey_data)) {
   spat_country_subd <- st_as_sf(subdivision_files[[country_code]]) %>% st_make_valid()
   
   # extract survey data for the current country and make it a spatial object
-  spat_gps_survey_data <- st_as_sf(gps_survey_data[[country_code]], coords = c("LONGNUM", "LATNUM"), crs = st_crs(spat_country_subd)) %>% st_make_valid()
-  
+  spat_gps_survey_data <- st_as_sf(country_data, coords = c("LONGNUM", "LATNUM"),
+                                   crs = st_crs(spat_country_subd)) %>% st_make_valid()
+
   # perform spatial join to find which geographic subdivision each cluster point is in
-  gps_survey_data_with_subdivision <- st_join(spat_gps_survey_data, spat_country_subd, join = st_within)
-  
+  gps_survey_data_with_subdivision <- st_join(spat_gps_survey_data, 
+                                              spat_country_subd %>% select(NAME_1), 
+                                              join = st_within)
+
   # calculate agric hh proportion within each geographic subdivision
   subd_averages <- gps_survey_data_with_subdivision %>%
-    group_by(NAME_1) %>% # NAME_1 is each subdivision name
-    summarize(subd_proportion = mean(agric_proportion, na.rm = TRUE))
+    st_drop_geometry() %>%
+    group_by(NAME_1) %>%
+    summarize(subd_proportion = mean(agric_proportion, na.rm = TRUE), .groups = "drop")
   
-  # clean up any invalid geometries in the joined data - fixed error
+  # join subd_proportion back into the spatial GPS data using a normal (non-spatial) join
+  gps_survey_data_with_subdivision <- gps_survey_data_with_subdivision %>%
+    left_join(subd_averages, by = "NAME_1")
+  
+  # clean up any invalid geometries in the joined data
   gps_survey_data_with_subdivision <- gps_survey_data_with_subdivision %>% st_make_valid()
-  
-  # join subd_averages to the gps_survey_data_with_subdivision
-  gps_survey_data_with_subdivision <- gps_survey_data_with_subdivision %>% st_join(subd_averages, join = st_within)
   
   # get the bounding box of the country to help scale the plots uniformly
   bbox <- st_bbox(country_shape)
@@ -1452,12 +1457,12 @@ for (country_code in names(gps_survey_data)) {
   # prepare the subd_proportion data
   subd_prop_data <- gps_survey_data_with_subdivision %>% 
     st_drop_geometry() %>%
-    select(NAME_1.x, subd_proportion) %>% 
+    select(NAME_1, subd_proportion) %>% 
     distinct()
   
   # join this to the spatial subdivision data
   spat_country_subd_with_prop <- spat_country_subd %>%
-    left_join(subd_prop_data, by = c("NAME_1" = "NAME_1.x"))
+    left_join(subd_prop_data, by = c("NAME_1"))
   
   # remove duplicate entries in spat_country_subd_with_prop
   spat_country_subd_with_prop <- spat_country_subd_with_prop %>%
@@ -1497,12 +1502,12 @@ for (country_code in names(gps_survey_data)) {
     geom_sf(data = spat_country_subd_with_prop, aes(fill = prop_cat, geometry = geometry), color = "white") +
     
     # apply agric_palette to the fill scale
-    scale_fill_manual(values = agric_palette, labels = interval_labels, na.value = "gray") +
+    scale_fill_manual(values = agric_palette2, labels = interval_labels, na.value = "gray") +
     
     # cluster data points without jitter
     geom_point(data = country_data, aes(x = LONGNUM, y = LATNUM, fill = prop_cat),
                size = 1.5, shape = 21, stroke = 0.2, show.legend = FALSE) +
-    scale_color_gradientn(colors = agric_palette) +
+    scale_color_gradientn(colors = agric_palette2) +
     
     # add thick black outlines for top 3 most populous subdivisions in each country
     geom_sf(data = filter(spat_country_subd_with_prop, is_top_populous == TRUE), 
