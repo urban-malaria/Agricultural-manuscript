@@ -1,4 +1,4 @@
-# Agricultural Work, Malaria Prevalence, and Mediating Factors: A Cross-Sectional Analysis of Data from 15 Sub-Saharan African Countries to Inform Risk Stratification and Intervention Planning
+# Agricultural Work, Malaria Prevalence, and Mediating Factors: A Cross-Sectional Analysis of Data from 15 Sub-Saharan African Countries to Inform Risk Stratification and Intervention Planning <a href="https://zenodo.org/doi/10.5281/zenodo.15831266"><img src="https://zenodo.org/badge/718266745.svg" alt="DOI"></a>
 ## Overview
 
 This repository contains the code and data structure for a cross-country analysis examining the relationship between adult agricultural occupation and malaria infection in children under five. Using Demographic and Health Survey (DHS) data from 15 Sub-Saharan African countries, the study evaluates key mediating factors and urban–rural differences in malaria risk. The project aims to support more targeted malaria interventions and promote integrated strategies for malaria control as global funding declines.
